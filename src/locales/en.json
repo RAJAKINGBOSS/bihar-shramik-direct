@@ -1,0 +1,9 @@
+{
+  "title": "Worker Dashboard",
+  "available": "Available for Work Now",
+  "not_available": "Not Available",
+  "today_earnings": "Today's Direct Earnings",
+  "basic_daily_amount": "Basic Daily Amount",
+  "eligible_topup": "Eligible Top-up",
+  "withdraw": "Instant Withdraw (UPI)"
+}

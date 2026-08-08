@@ -1,15 +1,20 @@
 # Bihar Shramik Direct
 
-Placeholder repository for the Bihar Shramik Direct project.
+Mobile-first Next.js + Supabase app for gig workers in Bihar.
 
-This repository will contain a Next.js + Supabase mobile-first web application for gig workers in Bihar.
+Setup (local):
+1. Install dependencies: npm install
+2. Add env vars in .env.local:
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key (for server scripts)
+3. Run dev: npm run dev
 
-Contents to be added:
-- Next.js (TypeScript) frontend
-- Tailwind CSS for styling
-- Supabase SQL schema and RPC functions
-- Supabase Edge function / cron script for Basic Daily Amount top-ups
-- README with setup and deployment instructions
+Database:
+- Run db/schema.sql in Supabase SQL editor.
+- Run db/close_availability_rpc.sql to create RPC.
+- Insert app_settings key 'state_minimum_daily_amount' with JSON {"amount_cents":22000}
 
-Branch policy:
-- A feature branch `bihar-shramik-direct/init` will be created containing the initial project scaffold.
+Deploy:
+- Add env vars to Vercel or your host.
+- Setup cron to run server/cron/topup.js (uses SUPABASE_SERVICE_ROLE_KEY) daily.
