@@ -2,715 +2,359 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bihar Shramik Direct — Worker Dashboard (Demo)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Bihar Shramik Direct</title>
+ 
+<!-- Tailwind CSS via CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+ 
+<!-- FontAwesome via CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+ 
 <style>
-  :root {
-    --bg: #0a0a0a;
-    --card: #1a1a1a;
-    --card-2: #222222;
-    --border: #2e2e2e;
-    --text: #f5f5f5;
-    --text-dim: #a3a3a3;
-    --text-faint: #737373;
-    --green: #22c55e;
-    --green-dim: #86efac;
-    --amber: #f59e0b;
-    --amber-dim: #fbbf24;
+  /* Small custom bits Tailwind utility classes can't express cleanly */
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+ 
+  .tab-active {
+    background-color: #ffffff;
+    color: #111827;
   }
-
-  * { box-sizing: border-box; }
-
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    min-height: 100vh;
+  .tab-inactive {
+    background-color: transparent;
+    color: #9ca3af;
   }
-
-  .app {
-    max-width: 420px;
-    margin: 0 auto;
-    padding: 24px 18px 40px;
+ 
+  .status-btn-offline {
+    background-color: #dc2626; /* red-600 */
   }
-
-  /* ---------- Header ---------- */
-  header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 20px;
+  .status-btn-online {
+    background-color: #16a34a; /* green-600 */
   }
-
-  .welcome-label {
-    color: var(--text-dim);
-    font-size: 13px;
-    margin: 0 0 2px;
+ 
+  .progress-bar-fill {
+    transition: width 0.5s ease;
   }
-
-  .worker-name {
-    font-size: 20px;
-    font-weight: 600;
-    margin: 0;
-  }
-
-  .worker-category {
-    color: var(--text-faint);
-    font-size: 12px;
-    margin-top: 2px;
-  }
-
-  .lang-switcher {
-    display: flex;
-    gap: 3px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 3px;
-  }
-
-  .lang-btn {
-    border: none;
-    background: transparent;
-    color: var(--text-faint);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 6px 10px;
-    border-radius: 999px;
-    cursor: pointer;
-  }
-
-  .lang-btn.active {
-    background: #fff;
-    color: #111;
-  }
-
-  /* ---------- Availability toggle ---------- */
-  .availability {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-radius: 16px;
-    padding: 16px 18px;
-    margin-bottom: 14px;
-    background: var(--card-2);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
-    user-select: none;
-  }
-
-  .availability.online {
-    background: #0f2e1c;
-    border-color: #1b5e34;
-  }
-
-  .avail-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--text-faint);
-  }
-
-  .availability.online .dot {
-    background: var(--green);
-    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
-    animation: pulse 1.6s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
-    50% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0.08); }
-  }
-
-  .avail-label {
-    font-size: 15px;
-    font-weight: 500;
-  }
-
-  .switch-track {
-    width: 46px;
-    height: 26px;
-    border-radius: 999px;
-    background: var(--border);
-    position: relative;
-    transition: background 0.2s ease;
-    flex-shrink: 0;
-  }
-
-  .availability.online .switch-track {
-    background: var(--green-dim);
-  }
-
-  .switch-thumb {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #fff;
-    transition: transform 0.2s ease;
-  }
-
-  .availability.online .switch-thumb {
-    transform: translateX(20px);
-  }
-
-  .gps-note {
-    font-size: 11px;
-    color: var(--text-faint);
-    margin: -6px 0 14px 2px;
-    min-height: 14px;
-  }
-
-  /* ---------- Wallet card ---------- */
-  .wallet-card {
-    border-radius: 16px;
-    padding: 18px;
-    margin-bottom: 14px;
-    background: linear-gradient(180deg, #1c1c1c, #141414);
-    border: 1px solid var(--border);
-  }
-
-  .wallet-label {
-    color: var(--text-dim);
-    font-size: 13px;
-    margin: 0 0 4px;
-  }
-
-  .wallet-balance {
-    font-size: 30px;
-    font-weight: 700;
-    margin: 0;
-  }
-
-  .wallet-today {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: var(--green);
-    font-size: 13px;
-    margin-top: 6px;
-  }
-
-  .withdraw-btn {
-    width: 100%;
-    margin-top: 14px;
-    border: none;
-    border-radius: 12px;
-    background: #fff;
-    color: #111;
-    font-weight: 600;
-    font-size: 14px;
-    padding: 12px 0;
-    cursor: pointer;
-  }
-
-  .withdraw-btn:active {
-    transform: scale(0.98);
-  }
-
-  .withdraw-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-
-  /* ---------- Basic Daily Amount tracker ---------- */
-  .bda-card {
-    border-radius: 16px;
-    padding: 18px;
-    margin-bottom: 20px;
-    background: var(--card);
-    border: 1px solid var(--border);
-  }
-
-  .bda-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-  }
-
-  .bda-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #d4d4d4;
-    margin: 0;
-  }
-
-  .bda-hours {
-    font-size: 11px;
-    color: var(--text-faint);
-  }
-
-  .bda-amounts {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    margin-bottom: 10px;
-  }
-
-  .bda-earned {
-    font-size: 22px;
-    font-weight: 700;
-  }
-
-  .bda-outof {
-    font-size: 13px;
-    color: var(--text-dim);
-  }
-
-  .bar-track {
-    height: 10px;
-    width: 100%;
-    background: var(--border);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-
-  .bar-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: var(--amber);
-    transition: width 0.4s ease, background 0.4s ease;
-  }
-
-  .bar-fill.reached {
-    background: var(--green);
-  }
-
-  .bda-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 10px;
-  }
-
-  .bda-status {
-    font-size: 12px;
-    color: var(--text-faint);
-  }
-
-  .bda-topup {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--amber-dim);
-  }
-
-  .bda-hint {
-    font-size: 11px;
-    color: #5c5c5c;
-    margin-top: 8px;
-  }
-
-  /* ---------- Demo controls ---------- */
-  .demo-panel {
-    border-radius: 16px;
-    padding: 16px 18px;
-    background: #111;
-    border: 1px dashed #3a3a3a;
-  }
-
-  .demo-title {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-    margin: 0 0 12px;
-  }
-
-  .demo-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .demo-row label {
-    font-size: 12px;
-    color: var(--text-dim);
-    width: 92px;
-    flex-shrink: 0;
-  }
-
-  .demo-row input[type="range"] {
-    flex: 1;
-  }
-
-  .demo-row .val {
-    font-size: 12px;
-    color: var(--text);
-    width: 46px;
-    text-align: right;
-    flex-shrink: 0;
-  }
-
-  .demo-btns {
-    display: flex;
-    gap: 8px;
-    margin-top: 4px;
-  }
-
-  .demo-btns button {
-    flex: 1;
-    border: 1px solid var(--border);
-    background: var(--card-2);
-    color: var(--text);
-    font-size: 12px;
-    padding: 8px 0;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-
-  .demo-btns button:active {
-    transform: scale(0.97);
-  }
-
-  .toast {
-    position: fixed;
-    left: 50%;
-    bottom: 24px;
-    transform: translateX(-50%) translateY(20px);
-    background: #fff;
-    color: #111;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 10px 18px;
-    border-radius: 999px;
-    opacity: 0;
-    transition: opacity 0.25s ease, transform 0.25s ease;
-    pointer-events: none;
-    white-space: nowrap;
-  }
-
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
+ 
+  /* Simple QR placeholder pattern using CSS gradients — no image asset needed */
+  .qr-placeholder {
+    background-image:
+      linear-gradient(45deg, #111 25%, transparent 25%),
+      linear-gradient(-45deg, #111 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #111 75%),
+      linear-gradient(-45deg, transparent 75%, #111 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
   }
 </style>
 </head>
-<body>
-
-<div class="app">
-
-  <!-- ===== Header ===== -->
-  <header>
-    <div>
-      <p class="welcome-label" id="welcome-label">Welcome back</p>
-      <h1 class="worker-name">Ramesh Kumar</h1>
-      <p class="worker-category" id="worker-category">Electrician · Patna</p>
+ 
+<body class="bg-gray-950 text-gray-100 min-h-screen pb-10">
+ 
+  <!-- ============ Sticky Header ============ -->
+  <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-lg">
+    <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-green-600 flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-bolt text-white text-sm"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold leading-tight">Bihar Shramik Direct</h1>
+          <p class="text-[11px] text-gray-400 leading-tight" data-en="Zero Commission Platform" data-hi="जीरो कमीशन प्लेटफॉर्म">Zero Commission Platform</p>
+        </div>
+      </div>
+ 
+      <!-- Language toggle -->
+      <button id="lang-toggle" class="flex items-center gap-1 bg-gray-800 border border-gray-700 rounded-full px-3 py-1.5 text-xs font-semibold active:scale-95 transition-transform">
+        <i class="fa-solid fa-language text-green-400"></i>
+        <span id="lang-toggle-label">हिंदी</span>
+      </button>
     </div>
-    <div class="lang-switcher">
-      <button class="lang-btn active" data-lang="hi">हिं</button>
-      <button class="lang-btn" data-lang="bho">भो</button>
-      <button class="lang-btn" data-lang="en">EN</button>
+ 
+    <!-- Main tabs -->
+    <div class="max-w-md mx-auto px-4 pb-3">
+      <div class="flex bg-gray-800 rounded-xl p-1 gap-1">
+        <button id="tab-worker-btn" onclick="switchTab('worker')" class="flex-1 py-2 rounded-lg text-sm font-semibold tab-active transition-colors flex items-center justify-center gap-2">
+          <i class="fa-solid fa-screwdriver-wrench"></i>
+          <span data-en="I am a Worker" data-hi="मैं एक श्रमिक हूँ">I am a Worker</span>
+        </button>
+        <button id="tab-customer-btn" onclick="switchTab('customer')" class="flex-1 py-2 rounded-lg text-sm font-semibold tab-inactive transition-colors flex items-center justify-center gap-2">
+          <i class="fa-solid fa-user"></i>
+          <span data-en="I am a Customer" data-hi="मैं एक ग्राहक हूँ">I am a Customer</span>
+        </button>
+      </div>
     </div>
   </header>
-
-  <!-- ===== Availability toggle ===== -->
-  <div class="availability" id="availability">
-    <div class="avail-left">
-      <span class="dot"></span>
-      <span class="avail-label" id="avail-label">Not available</span>
-    </div>
-    <div class="switch-track">
-      <div class="switch-thumb"></div>
-    </div>
+ 
+  <main class="max-w-md mx-auto px-4 pt-5">
+ 
+    <!-- ============================================================ -->
+    <!-- WORKER DASHBOARD VIEW (default visible)                       -->
+    <!-- ============================================================ -->
+    <section id="worker-view">
+ 
+      <!-- Worker profile strip -->
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="text-xs text-gray-400" data-en="Welcome back" data-hi="वापसी पर स्वागत है">Welcome back</p>
+          <h2 class="text-lg font-bold">Ramesh Kumar</h2>
+          <p class="text-xs text-gray-500" data-en="Electrician · Patna" data-hi="इलेक्ट्रीशियन · पटना">Electrician · Patna</p>
+        </div>
+        <div class="w-11 h-11 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center">
+          <i class="fa-solid fa-user text-gray-400"></i>
+        </div>
+      </div>
+ 
+      <!-- Status toggle -->
+      <button id="status-toggle" onclick="toggleStatus()" class="status-btn-offline w-full rounded-2xl py-5 px-5 flex items-center justify-between shadow-lg active:scale-[0.98] transition-all mb-4">
+        <div class="flex items-center gap-3">
+          <span id="status-dot" class="w-3 h-3 rounded-full bg-white/70"></span>
+          <span id="status-label" class="text-white font-bold text-base" data-en="Go Online / Available for Work" data-hi="ऑनलाइन जाएं / काम के लिए उपलब्ध">Go Online / Available for Work</span>
+        </div>
+        <i id="status-icon" class="fa-solid fa-power-off text-white text-lg"></i>
+      </button>
+      <p id="status-note" class="text-[11px] text-gray-500 -mt-2 mb-5 px-1" data-en="You're offline. Go online to receive bookings." data-hi="आप ऑफलाइन हैं। बुकिंग पाने के लिए ऑनलाइन जाएं।">You're offline. Go online to receive bookings.</p>
+ 
+      <!-- Basic Daily Amount tracker -->
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-4">
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="text-sm font-semibold text-gray-300" data-en="Basic Daily Amount" data-hi="न्यूनतम दैनिक राशि">Basic Daily Amount</h3>
+          <span class="text-[11px] text-gray-500" data-en="Target: ₹500" data-hi="लक्ष्य: ₹500">Target: ₹500</span>
+        </div>
+ 
+        <div class="flex items-baseline gap-1 mb-3">
+          <span class="text-2xl font-extrabold text-white">₹300</span>
+          <span class="text-xs text-gray-400" data-en="earned today (Aaj ki Kamai)" data-hi="आज कमाया (आज की कमाई)">earned today (Aaj ki Kamai)</span>
+        </div>
+ 
+        <!-- Progress bar: 300 / 500 = 60% -->
+        <div class="h-3 w-full bg-gray-800 rounded-full overflow-hidden">
+          <div class="progress-bar-fill h-full bg-amber-500 rounded-full" style="width: 60%;"></div>
+        </div>
+        <div class="flex justify-between text-[11px] text-gray-500 mt-1">
+          <span>₹0</span>
+          <span data-en="60% of daily target" data-hi="दैनिक लक्ष्य का 60%">60% of daily target</span>
+          <span>₹500</span>
+        </div>
+ 
+        <!-- Top-up / Safety net highlight -->
+        <div class="mt-4 bg-amber-950/40 border border-amber-700/40 rounded-xl p-3 flex items-start gap-3">
+          <div class="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <i class="fa-solid fa-shield-heart text-amber-400"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-amber-300">
+              <span data-en="₹200 Platform Top-up Pending" data-hi="₹200 प्लेटफ़ॉर्म टॉप-अप बकाया">₹200 Platform Top-up Pending</span>
+            </p>
+            <p class="text-[11px] text-amber-200/70 mt-0.5 leading-snug" data-en="Complete 8 hours online today and if you're still short of ₹500, we'll top up the difference automatically." data-hi="आज 8 घंटे ऑनलाइन पूरा करें, अगर फिर भी ₹500 से कम हो तो हम अंतर अपने आप जोड़ देंगे।">Complete 8 hours online today and if you're still short of ₹500, we'll top up the difference automatically.</p>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-amber-300">
+              <i class="fa-regular fa-clock"></i>
+              <span data-en="4.5 / 8 hours online" data-hi="4.5 / 8 घंटे ऑनलाइन">4.5 / 8 hours online</span>
+            </div>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- Direct Wallet -->
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+        <h3 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-wallet text-green-400"></i>
+          <span data-en="Direct Wallet" data-hi="डायरेक्ट वॉलेट">Direct Wallet</span>
+        </h3>
+ 
+        <div class="flex items-center gap-4">
+          <!-- QR placeholder -->
+          <div class="w-24 h-24 bg-white rounded-lg p-2 flex-shrink-0">
+            <div class="w-full h-full qr-placeholder rounded"></div>
+          </div>
+ 
+          <div class="flex-1 min-w-0">
+            <p class="text-[11px] text-gray-500" data-en="Your UPI ID" data-hi="आपकी UPI ID">Your UPI ID</p>
+            <p class="text-sm font-semibold text-white truncate">ramesh.electrician@upi</p>
+            <p class="text-[11px] text-green-400 mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-check"></i>
+              <span data-en="100% goes to you, zero commission" data-hi="100% आपको मिलता है, जीरो कमीशन">100% goes to you, zero commission</span>
+            </p>
+          </div>
+        </div>
+ 
+        <button onclick="shareUpi()" class="w-full mt-4 bg-white text-gray-900 font-semibold text-sm rounded-xl py-3 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+          <i class="fa-solid fa-share-nodes"></i>
+          <span data-en="Share UPI ID with Customer" data-hi="ग्राहक के साथ UPI ID शेयर करें">Share UPI ID with Customer</span>
+        </button>
+      </div>
+ 
+    </section>
+ 
+    <!-- ============================================================ -->
+    <!-- CUSTOMER VIEW (hidden by default)                              -->
+    <!-- ============================================================ -->
+    <section id="customer-view" class="hidden">
+ 
+      <!-- Search bar -->
+      <div class="relative mb-4">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+        <input
+          type="text"
+          placeholder="Find services near you (e.g., Patna, Gaya)"
+          data-en-placeholder="Find services near you (e.g., Patna, Gaya)"
+          data-hi-placeholder="अपने पास सेवाएं खोजें (जैसे, पटना, गया)"
+          class="w-full bg-gray-900 border border-gray-800 rounded-xl py-3 pl-11 pr-4 text-sm placeholder-gray-500 focus:outline-none focus:border-green-600"
+        >
+      </div>
+ 
+      <!-- Quick category chips -->
+      <div class="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
+        <button class="flex-shrink-0 bg-gray-800 border border-gray-700 rounded-full px-3 py-1.5 text-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-faucet text-blue-400"></i>
+          <span data-en="Plumber" data-hi="प्लंबर">Plumber</span>
+        </button>
+        <button class="flex-shrink-0 bg-gray-800 border border-gray-700 rounded-full px-3 py-1.5 text-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-bolt text-yellow-400"></i>
+          <span data-en="Electrician" data-hi="इलेक्ट्रीशियन">Electrician</span>
+        </button>
+        <button class="flex-shrink-0 bg-gray-800 border border-gray-700 rounded-full px-3 py-1.5 text-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-spa text-pink-400"></i>
+          <span data-en="Beautician" data-hi="ब्यूटीशियन">Beautician</span>
+        </button>
+        <button class="flex-shrink-0 bg-gray-800 border border-gray-700 rounded-full px-3 py-1.5 text-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-motorcycle text-red-400"></i>
+          <span data-en="Delivery" data-hi="डिलीवरी">Delivery</span>
+        </button>
+      </div>
+ 
+      <p class="text-xs text-gray-500 mb-3 flex items-center gap-1.5">
+        <i class="fa-solid fa-map-pin text-green-500"></i>
+        <span data-en="3 workers available near Patna" data-hi="पटना के पास 3 श्रमिक उपलब्ध">3 workers available near Patna</span>
+      </p>
+ 
+      <!-- Worker card list -->
+      <div class="flex flex-col gap-3">
+ 
+        <!-- Card 1 -->
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+          <div class="flex items-start gap-3 mb-3">
+            <div class="w-14 h-14 rounded-full bg-blue-900/50 border border-blue-700/50 flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-faucet text-blue-400 text-lg"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-white text-base">Ramesh</h3>
+                <span class="flex items-center gap-1 bg-green-950/50 text-green-400 text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                  <span data-en="Online" data-hi="ऑनलाइन">Online</span>
+                </span>
+              </div>
+              <p class="text-xs text-gray-400" data-en="Plumber · 4.8" data-hi="प्लंबर · 4.8">Plumber · 4.8 <i class="fa-solid fa-star text-amber-400 text-[10px]"></i></p>
+              <p class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
+                <i class="fa-solid fa-location-dot"></i>
+                <span data-en="1.2 km away · Kankarbagh, Patna" data-hi="1.2 किमी दूर · कंकड़बाग, पटना">1.2 km away · Kankarbagh, Patna</span>
+              </p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <a href="tel:+919876543210" class="flex items-center justify-center gap-2 bg-gray-800 border border-gray-700 rounded-xl py-2.5 text-sm font-semibold active:scale-95 transition-transform">
+              <i class="fa-solid fa-phone text-green-400"></i>
+              <span data-en="Call Directly" data-hi="सीधे कॉल करें">Call Directly</span>
+            </a>
+            <button onclick="payDirectly('Ramesh')" class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 rounded-xl py-2.5 text-sm font-semibold text-white active:scale-95 transition-transform">
+              <i class="fa-solid fa-indian-rupee-sign"></i>
+              <span data-en="Pay Directly" data-hi="सीधे भुगतान करें">Pay Directly</span>
+            </button>
+          </div>
+        </div>
+ 
+        <!-- Card 2 -->
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+          <div class="flex items-start gap-3 mb-3">
+            <div class="w-14 h-14 rounded-full bg-pink-900/50 border border-pink-700/50 flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-spa text-pink-400 text-lg"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-white text-base">Sunita</h3>
+                <span class="flex items-center gap-1 bg-green-950/50 text-green-400 text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                  <span data-en="Online" data-hi="ऑनलाइन">Online</span>
+                </span>
+              </div>
+              <p class="text-xs text-gray-400" data-en="Beautician · 4.9" data-hi="ब्यूटीशियन · 4.9">Beautician · 4.9 <i class="fa-solid fa-star text-amber-400 text-[10px]"></i></p>
+              <p class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
+                <i class="fa-solid fa-location-dot"></i>
+                <span data-en="2.5 km away · Boring Road, Patna" data-hi="2.5 किमी दूर · बोरिंग रोड, पटना">2.5 km away · Boring Road, Patna</span>
+              </p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <a href="tel:+919876543211" class="flex items-center justify-center gap-2 bg-gray-800 border border-gray-700 rounded-xl py-2.5 text-sm font-semibold active:scale-95 transition-transform">
+              <i class="fa-solid fa-phone text-green-400"></i>
+              <span data-en="Call Directly" data-hi="सीधे कॉल करें">Call Directly</span>
+            </a>
+            <button onclick="payDirectly('Sunita')" class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 rounded-xl py-2.5 text-sm font-semibold text-white active:scale-95 transition-transform">
+              <i class="fa-solid fa-indian-rupee-sign"></i>
+              <span data-en="Pay Directly" data-hi="सीधे भुगतान करें">Pay Directly</span>
+            </button>
+          </div>
+        </div>
+ 
+        <!-- Card 3 -->
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+          <div class="flex items-start gap-3 mb-3">
+            <div class="w-14 h-14 rounded-full bg-yellow-900/50 border border-yellow-700/50 flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-bolt text-yellow-400 text-lg"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-white text-base">Anil</h3>
+                <span class="flex items-center gap-1 bg-gray-800 text-gray-400 text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0">
+                  <span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+                  <span data-en="Busy" data-hi="व्यस्त">Busy</span>
+                </span>
+              </div>
+              <p class="text-xs text-gray-400" data-en="Electrician · 4.6" data-hi="इलेक्ट्रीशियन · 4.6">Electrician · 4.6 <i class="fa-solid fa-star text-amber-400 text-[10px]"></i></p>
+              <p class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
+                <i class="fa-solid fa-location-dot"></i>
+                <span data-en="3.8 km away · Rajendra Nagar, Patna" data-hi="3.8 किमी दूर · राजेंद्र नगर, पटना">3.8 km away · Rajendra Nagar, Patna</span>
+              </p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <a href="tel:+919876543212" class="flex items-center justify-center gap-2 bg-gray-800 border border-gray-700 rounded-xl py-2.5 text-sm font-semibold active:scale-95 transition-transform">
+              <i class="fa-solid fa-phone text-green-400"></i>
+              <span data-en="Call Directly" data-hi="सीधे कॉल करें">Call Directly</span>
+            </a>
+            <button onclick="payDirectly('Anil')" class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 rounded-xl py-2.5 text-sm font-semibold text-white active:scale-95 transition-transform">
+              <i class="fa-solid fa-indian-rupee-sign"></i>
+              <span data-en="Pay Directly" data-hi="सीधे भुगतान करें">Pay Directly</span>
+            </button>
+          </div>
+        </div>
+ 
+      </div>
+ 
+      <p class="text-center text-[11px] text-gray-600 mt-5 flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-shield-halved text-green-600"></i>
+        <span data-en="Zero commission — 100% of your payment goes to the worker" data-hi="जीरो कमीशन — आपका पूरा भुगतान श्रमिक को जाता है">Zero commission — 100% of your payment goes to the worker</span>
+      </p>
+ 
+    </section>
+ 
+  </main>
+ 
+  <!-- Toast notification -->
+  <div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-6 bg-white text-gray-900 text-sm font-medium px-5 py-2.5 rounded-full shadow-xl opacity-0 pointer-events-none transition-all duration-300 z-50 whitespace-nowrap">
   </div>
-  <p class="gps-note" id="gps-note"></p>
-
-  <!-- ===== Wallet card ===== -->
-  <div class="wallet-card">
-    <p class="wallet-label" id="wallet-label">Wallet balance</p>
-    <p class="wallet-balance">₹<span id="balance">0</span></p>
-    <div class="wallet-today">
-      <span>↗</span>
-      <span><span id="today-label">Today's direct earnings</span>: ₹<span id="today-earnings">0</span></span>
-    </div>
-    <button class="withdraw-btn" id="withdraw-btn">Withdraw instantly</button>
-  </div>
-
-  <!-- ===== Basic Daily Amount tracker ===== -->
-  <div class="bda-card">
-    <div class="bda-top">
-      <p class="bda-title" id="bda-title">Basic Daily Amount</p>
-      <span class="bda-hours"><span id="hours-active">0</span>h <span id="hours-label">active</span></span>
-    </div>
-
-    <div class="bda-amounts">
-      <span class="bda-earned">₹<span id="bda-earned">0</span></span>
-      <span class="bda-outof"><span id="outof-label">of</span> ₹<span id="bda-min">400</span></span>
-    </div>
-
-    <div class="bar-track">
-      <div class="bar-fill" id="bar-fill" style="width: 0%"></div>
-    </div>
-
-    <div class="bda-bottom">
-      <span class="bda-status" id="bda-status">Keep working to reach today's target</span>
-      <span class="bda-topup" id="bda-topup"></span>
-    </div>
-
-    <p class="bda-hint" id="bda-hint"></p>
-  </div>
-
-  <br/>
-
-  <!-- ===== Demo controls (not part of the real product UI) ===== -->
-  <div class="demo-panel">
-    <p class="demo-title">Demo controls — simulate a day's work</p>
-
-    <div class="demo-row">
-      <label for="hours-slider">Hours active</label>
-      <input type="range" id="hours-slider" min="0" max="10" step="0.5" value="0">
-      <span class="val" id="hours-val">0h</span>
-    </div>
-
-    <div class="demo-row">
-      <label for="earnings-slider">Direct earnings</label>
-      <input type="range" id="earnings-slider" min="0" max="600" step="10" value="0">
-      <span class="val" id="earnings-val">₹0</span>
-    </div>
-
-    <div class="demo-btns">
-      <button id="simulate-booking">+ ₹80 booking</button>
-      <button id="reset-day">Reset day</button>
-    </div>
-  </div>
-
-</div>
-
-<div class="toast" id="toast"></div>
-
+ 
 <script>
-/*
-  ============================================================
-  This is a self-contained MOCK of the real Worker Dashboard.
-  No backend, no Supabase, no network calls — everything below
-  is the same business logic that lives in lib/wage-calculator.ts
-  and components/worker/*.tsx in the real Next.js project, just
-  re-implemented in plain JS so it runs directly in any browser.
-
-  "Demo controls" at the bottom simulate what would normally
-  happen automatically: the worker going online (GPS + timer)
-  and customer bookings landing in real time.
-  ============================================================
-*/
-
-// ---------- i18n ----------
-const translations = {
-  hi: {
-    welcome: 'फिर से स्वागत है',
-    category: 'इलेक्ट्रीशियन · पटना',
-    availableForWork: 'काम के लिए उपलब्ध',
-    unavailable: 'अभी उपलब्ध नहीं',
-    walletBalance: 'वॉलेट बैलेंस',
-    todaysEarnings: 'आज की सीधी कमाई',
-    withdraw: 'तुरंत निकासी करें',
-    basicDailyAmount: 'न्यूनतम दैनिक राशि',
-    active: 'सक्रिय',
-    outOf: 'में से',
-    keepWorking: 'लक्ष्य तक पहुँचने के लिए काम जारी रखें',
-    targetReached: 'आज का लक्ष्य पूरा हुआ',
-    topUpEligible: 'टॉप-अप के लिए पात्र',
-    hint: 'न्यूनतम गारंटी ₹400 — 8 घंटे पूरे होने पर टॉप-अप मिलेगा',
-    gpsOn: 'लोकेशन साझा हो रही है — पास के ग्राहक आपको देख सकते हैं',
-    withdrawn: 'निकासी शुरू हुई — UPI ऐप खुल रहा है',
-    bookingAdded: '₹80 की नई बुकिंग जुड़ी',
-  },
-  bho: {
-    welcome: 'फेर से स्वागत बा',
-    category: 'इलेक्ट्रीशियन · पटना',
-    availableForWork: 'काम खातिर उपलब्ध बानी',
-    unavailable: 'अभी उपलब्ध नइखीं',
-    walletBalance: 'वॉलेट बैलेंस',
-    todaysEarnings: 'आज के सीधा कमाई',
-    withdraw: 'तुरंते निकासी करीं',
-    basicDailyAmount: 'न्यूनतम रोज के राशि',
-    active: 'सक्रिय',
-    outOf: 'में से',
-    keepWorking: 'लक्ष्य तक पहुँचे खातिर काम जारी राखीं',
-    targetReached: 'आज के लक्ष्य पूरा भइल',
-    topUpEligible: 'टॉप-अप खातिर योग्य',
-    hint: 'न्यूनतम गारंटी ₹400 — 8 घंटा पूरा होखला पर टॉप-अप मिली',
-    gpsOn: 'लोकेशन शेयर हो रहल बा — लगे के ग्राहक देख सकेलें',
-    withdrawn: 'निकासी शुरू भइल — UPI ऐप खुल रहल बा',
-    bookingAdded: '₹80 के नया बुकिंग जुड़ल',
-  },
-  en: {
-    welcome: 'Welcome back',
-    category: 'Electrician · Patna',
-    availableForWork: 'Available for work',
-    unavailable: 'Not available',
-    walletBalance: 'Wallet balance',
-    todaysEarnings: "Today's direct earnings",
-    withdraw: 'Withdraw instantly',
-    basicDailyAmount: 'Basic Daily Amount',
-    active: 'active',
-    outOf: 'of',
-    keepWorking: 'Keep working to reach today\u2019s target',
-    targetReached: 'Today\u2019s target reached',
-    topUpEligible: 'top-up eligible',
-    hint: 'Minimum guaranteed ₹400 — top-up unlocks after 8 full hours',
-    gpsOn: 'Sharing location — nearby customers can find you',
-    withdrawn: 'Withdrawal started — opening UPI app',
-    bookingAdded: '₹80 booking added',
-  },
-};
-
-let lang = 'hi';
-
-// ---------- Mock state (stands in for the wallets/attendance_sessions rows) ----------
-const state = {
-  isAvailable: false,
-  activeSeconds: 0,        // fed by the "Hours active" demo slider
-  directEarnings: 0,       // fed by the "Direct earnings" slider / booking button
-  balance: 0,
-  dailyMinimumWage: 400,
-};
-
-// ---------- Core logic — identical rules to lib/wage-calculator.ts ----------
-function calculateBasicDailyAmount({ directEarningsToday, activeSeconds, dailyMinimumWage }) {
-  const fullDaySeconds = 8 * 60 * 60;
-  const hoursActive = activeSeconds / 3600;
-  const isFullDayComplete = activeSeconds >= fullDaySeconds;
-  const shortfall = Math.max(0, dailyMinimumWage - directEarningsToday);
-  const topUpEligible = isFullDayComplete ? Math.round(shortfall * 100) / 100 : 0;
-  const progressPercent = Math.min(100, Math.round((directEarningsToday / dailyMinimumWage) * 100));
-
-  return {
-    hoursActive: Math.round(hoursActive * 10) / 10,
-    isFullDayComplete,
-    shortfall: Math.round(shortfall * 100) / 100,
-    topUpEligible,
-    progressPercent,
-    targetReached: directEarningsToday >= dailyMinimumWage,
-  };
-}
-
-// ---------- Rendering ----------
-function render() {
-  const t = translations[lang];
-
-  document.getElementById('welcome-label').textContent = t.welcome;
-  document.getElementById('worker-category').textContent = t.category;
-  document.getElementById('wallet-label').textContent = t.walletBalance;
-  document.getElementById('today-label').textContent = t.todaysEarnings;
-  document.getElementById('withdraw-btn').textContent = t.withdraw;
-  document.getElementById('bda-title').textContent = t.basicDailyAmount;
-  document.getElementById('hours-label').textContent = t.active;
-  document.getElementById('outof-label').textContent = t.outOf;
-  document.getElementById('bda-hint').textContent = t.hint;
-
-  // Availability
-  const availEl = document.getElementById('availability');
-  availEl.classList.toggle('online', state.isAvailable);
-  document.getElementById('avail-label').textContent = state.isAvailable ? t.availableForWork : t.unavailable;
-  document.getElementById('gps-note').textContent = state.isAvailable ? t.gpsOn : '';
-
-  // Wallet
-  document.getElementById('balance').textContent = state.balance.toLocaleString('en-IN');
-  document.getElementById('today-earnings').textContent = state.directEarnings.toLocaleString('en-IN');
-  document.getElementById('withdraw-btn').disabled = state.balance <= 0;
-
-  // Basic Daily Amount
-  const wage = calculateBasicDailyAmount({
-    directEarningsToday: state.directEarnings,
-    activeSeconds: state.activeSeconds,
-    dailyMinimumWage: state.dailyMinimumWage,
-  });
-
-  document.getElementById('hours-active').textContent = wage.hoursActive;
-  document.getElementById('bda-earned').textContent = state.directEarnings.toLocaleString('en-IN');
-  document.getElementById('bda-min').textContent = state.dailyMinimumWage.toLocaleString('en-IN');
-
-  const barFill = document.getElementById('bar-fill');
-  barFill.style.width = wage.progressPercent + '%';
-  barFill.classList.toggle('reached', wage.targetReached);
-
-  document.getElementById('bda-status').textContent = wage.targetReached ? t.targetReached : t.keepWorking;
-
-  const topupEl = document.getElementById('bda-topup');
-  if (wage.isFullDayComplete && wage.topUpEligible > 0) {
-    topupEl.textContent = `+ ₹${wage.topUpEligible.toLocaleString('en-IN')} ${t.topUpEligible}`;
-  } else {
-    topupEl.textContent = '';
-  }
-}
-
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => toast.classList.remove('show'), 2200);
-}
-
-// ---------- Event wiring ----------
-document.querySelectorAll('.lang-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    lang = btn.dataset.lang;
-    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b === btn));
-    render();
-  });
-});
-
-document.getElementById('availability').addEventListener('click', () => {
-  state.isAvailable = !state.isAvailable;
-  render();
-});
-
-document.getElementById('withdraw-btn').addEventListener('click', () => {
-  if (state.balance <= 0) return;
-  showToast(translations[lang].withdrawn);
-});
-
-const hoursSlider = document.getElementById('hours-slider');
-hoursSlider.addEventListener('input', () => {
-  state.activeSeconds = parseFloat(hoursSlider.value) * 3600;
-  document.getElementById('hours-val').textContent = parseFloat(hoursSlider.value) + 'h';
-  render();
-});
-
-const earningsSlider = document.getElementById('earnings-slider');
-earningsSlider.addEventListener('input', () => {
-  state.directEarnings = parseFloat(earningsSlider.value);
-  state.balance = state.directEarnings;
-  document.getElementById('earnings-val').textContent = '₹' + earningsSlider.value;
-  render();
-});
-
-document.getElementById('simulate-booking').addEventListener('click', () => {
-  state.directEarnings += 80;
-  state.balance += 80;
-  earningsSlider.value = Math.min(600, state.directEarnings);
-  document.getElementById('earnings-val').textContent = '₹' + Math.round(state.directEarnings);
-  showToast(translations[lang].bookingAdded);
-  render();
-});
-
-document.getElementById('reset-day').addEventListener('click', () => {
-  state.activeSeconds = 0;
-  state.directEarnings = 0;
-  state.balance = 0;
-  hoursSlider.value = 0;
-  earningsSlider.value = 0;
-  document.getElementById('hours-val').textContent = '0h';
-  document.getElementById('earnings-val').textContent = '₹0';
-  render();
-});
-
-render();
-</script>
-
-</body>
-</html>
+  // ============================================================
+  // State
+  // ============================================================
+  let currentLang = 'en';   // 'en' | 'hi'
+  let isOnline = false;     // worker's Go Online / Offline status
+ 
+  // ============================================================
+  // Tab switching — Worker view vs Customer view
+  // ============================================================
+  function switchTab(tab) {
+    const workerView = document.getElementById('worker-view');
+    const customerView = document.getElementById('customer-view');
+    const workerBtn = document.getElementById('tab-worker-btn')
