@@ -1,0 +1,34 @@
+/* app/globals.css */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;800&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Palette drawn from Madhubani folk art & Bihar's everyday materials —
+     not the default cream/terracotta AI palette. */
+  --indigo: #1b2a4a;      /* primary ink, headers, active states */
+  --turmeric: #e8a83c;    /* money, the earnings ring's "earned" arc */
+  --sal-green: #3d7a5c;   /* "available" status, positive actions */
+  --sindoor: #c74b3f;     /* alerts, withdraw CTA */
+  --rice-paper: #faf6ee;  /* page background */
+  --ink: #2b2420;         /* body text */
+  --topup-gold: #f2c14e; /* the ring's "welfare top-up" arc — visibly
+                             distinct from direct-earning turmeric */
+}
+
+html, body {
+  background: var(--rice-paper);
+  color: var(--ink);
+  font-family: "Noto Sans Devanagari", system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* tabular figures for money so amounts don't jitter as digits change */
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
