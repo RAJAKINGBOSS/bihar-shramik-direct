@@ -1,164 +1,98 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import EarningsRing from "@/components/EarningsRing";
-import AvailabilityToggle from "@/components/AvailabilityToggle";
-import LanguageToggle from "@/components/LanguageToggle";
-import { Lang, t, formatRupees } from "@/lib/i18n";
+import { formatRupees } from "@/lib/i18n";
 
-// Replace with a real Supabase client + row subscriptions.
-// Shape mirrors public.daily_earning_summary + public.wallets from schema.sql.
-interface DashboardData {
-  workerName: string;
-  isAvailable: boolean;
-  todayDirectEarningsPaise: number;
-  todayTopupPaise: number;       // credited so far (settle_daily_topup can run mid-day for a live estimate)
-  minWageTargetPaise: number;
-  activeSeconds: number;
-  walletBalancePaise: number;
-  kycVerified: boolean;
+interface EarningsRingProps {
+  earnedPaise: number;      // direct earnings so far today
+  topupPaise: number;       // welfare top-up credited/eligible so far
+  targetPaise: number;      // state minimum wage target for the day
+  size?: number;
 }
 
-const MOCK_DATA: DashboardData = {
-  workerName: "Ravi Kumar",
-  isAvailable: true,
-  todayDirectEarningsPaise: 32000,   // ₹320 earned directly from customers so far
-  todayTopupPaise: 8000,             // ₹80 top-up already credited
-  minWageTargetPaise: 55000,         // ₹550 state daily minimum for the worker's category/district
-  activeSeconds: 5 * 3600 + 40 * 60, // 5h 40m into the day
-  walletBalancePaise: 40000,
-  kycVerified: true,
-};
+/**
+ * Signature element: a diya (oil lamp) ring that fills like oil rising
+ * toward the wick as the worker earns. The direct-earning arc fills in
+ * turmeric gold; once earnings alone don't reach the state minimum, a
+ * second, visibly distinct gold-white arc shows the welfare top-up
+ * completing the flame — so a worker can see at a glance whether
+ * today's income is coming from customers or from the safety net,
+ * without reading numbers.
+ */
+export default function EarningsRing({
+  earnedPaise,
+  topupPaise,
+  targetPaise,
+  size = 220,
+}: EarningsRingProps) {
+  const radius = size / 2 - 14;
+  const circumference = 2 * Math.PI * radius;
+  const safeTarget = Math.max(targetPaise, 1);
 
-const REQUIRED_SECONDS = 8 * 3600;
+  const earnedFraction = Math.min(earnedPaise / safeTarget, 1);
+  const topupFraction = Math.min((earnedPaise + topupPaise) / safeTarget, 1) - earnedFraction;
 
-export default function WorkerDashboardPage() {
-  const [lang, setLang] = useState<Lang>("hi");
-  const [data, setData] = useState<DashboardData>(MOCK_DATA);
+  const earnedLength = circumference * earnedFraction;
+  const topupLength = circumference * Math.max(topupFraction, 0);
+  const center = size / 2;
 
-  // TODO: replace with a Supabase realtime subscription on
-  // `wallets`, `wallet_transactions`, and `availability_sessions`
-  // filtered to the logged-in worker's id.
-  useEffect(() => {
-    // fetchDashboard(workerId).then(setData);
-  }, []);
-
-  const hoursActive = useMemo(() => data.activeSeconds / 3600, [data.activeSeconds]);
-  const hoursProgress = Math.min(data.activeSeconds / REQUIRED_SECONDS, 1);
-
-  const projectedTopup = Math.max(
-    0,
-    data.minWageTargetPaise - data.todayDirectEarningsPaise - data.todayTopupPaise
-  );
-
-  function handleToggleAvailability() {
-    setData((prev) => ({ ...prev, isAvailable: !prev.isAvailable }));
-    // TODO: write to workers.is_available + open/close availability_sessions row
-  }
-
-  function handleWithdraw() {
-    // TODO: trigger UPI deep link / Razorpay payout for data.walletBalancePaise
-    alert(`UPI withdrawal of ${formatRupees(data.walletBalancePaise)} initiated`);
-  }
+  const reachedTarget = earnedPaise + topupPaise >= targetPaise;
 
   return (
-    <main className="min-h-screen bg-ricepaper pb-10">
-      {/* Header */}
-      <header className="px-4 pt-5 pb-4 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-ink/60">{t(lang, "greeting")},</p>
-          <h1 className="text-xl font-extrabold text-indigo">{data.workerName}</h1>
-        </div>
-        <LanguageToggle lang={lang} onChange={setLang} />
-      </header>
-
-      <div className="px-4 space-y-4">
-        {/* Availability toggle */}
-        <AvailabilityToggle
-          isAvailable={data.isAvailable}
-          onToggle={handleToggleAvailability}
-          lang={lang}
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        {/* track */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="#E8DFC9"
+          strokeWidth={14}
         />
+        {/* direct earnings arc */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="#E8A83C"
+          strokeWidth={14}
+          strokeLinecap="round"
+          strokeDasharray={`${earnedLength} ${circumference - earnedLength}`}
+          className="transition-all duration-700 ease-out"
+        />
+        {/* welfare top-up arc, offset to start where earnings left off */}
+        {topupLength > 0 && (
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke="#F2C14E"
+            strokeWidth={14}
+            strokeLinecap="round"
+            strokeDasharray={`${topupLength} ${circumference - topupLength}`}
+            strokeDashoffset={-earnedLength}
+            className="transition-all duration-700 ease-out"
+          />
+        )}
+      </svg>
 
-        {/* Basic Daily Amount tracker */}
-        <section className="rounded-3xl bg-white border border-ink/10 p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-indigo">{t(lang, "basic_daily_amount")}</h2>
-            {!data.kycVerified && (
-              <span className="text-xs text-sindoor font-semibold">
-                {t(lang, "kyc_pending_note")}
-              </span>
-            )}
-          </div>
-
-          <div className="flex justify-center py-2">
-            <EarningsRing
-              earnedPaise={data.todayDirectEarningsPaise}
-              topupPaise={data.todayTopupPaise}
-              targetPaise={data.minWageTargetPaise}
-            />
-          </div>
-
-          {/* Legend */}
-          <div className="flex justify-center gap-5 text-xs mt-1 mb-4">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-turmeric inline-block" />
-              {t(lang, "direct_from_customers")}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-topupgold inline-block" />
-              {t(lang, "topup_eligible")}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-ricepaper p-3">
-              <p className="text-xs text-ink/60">{t(lang, "todays_earnings")}</p>
-              <p className="font-tabular text-lg font-bold text-indigo">
-                {formatRupees(data.todayDirectEarningsPaise)}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-ricepaper p-3">
-              <p className="text-xs text-ink/60">{t(lang, "topup_eligible")}</p>
-              <p className="font-tabular text-lg font-bold text-topupgold">
-                {formatRupees(projectedTopup)}
-              </p>
-            </div>
-          </div>
-
-          {/* Hours-active progress bar — the other condition for topup eligibility */}
-          <div className="mt-4">
-            <div className="flex justify-between text-xs text-ink/60 mb-1">
-              <span>{t(lang, "hours_active")}</span>
-              <span className="font-tabular">
-                {hoursActive.toFixed(1)}h {t(lang, "of_required_hours")}
-              </span>
-            </div>
-            <div className="h-2 rounded-full bg-ink/10 overflow-hidden">
-              <div
-                className="h-full bg-salgreen transition-all duration-500"
-                style={{ width: `${hoursProgress * 100}%` }}
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Wallet */}
-        <section className="rounded-3xl bg-indigo text-ricepaper p-5 shadow-sm">
-          <p className="text-sm text-ricepaper/70">{t(lang, "wallet_balance")}</p>
-          <p className="font-tabular text-3xl font-extrabold mt-1">
-            {formatRupees(data.walletBalancePaise)}
-          </p>
-          <button
-            onClick={handleWithdraw}
-            className="mt-4 w-full rounded-2xl bg-turmeric text-indigo font-bold py-3
-                       active:scale-[0.98] transition-transform duration-150
-                       focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ricepaper"
-          >
-            {t(lang, "withdraw_now")} · UPI
-          </button>
-        </section>
+      {/* flame glyph at the wick position, lit once target is reached */}
+      <div
+        className="absolute flex flex-col items-center justify-center text-center"
+        style={{ width: size * 0.62, height: size * 0.62 }}
+      >
+        <span className="text-2xl" aria-hidden>
+          {reachedTarget ? "🪔" : "🪔"}
+        </span>
+        <span className="font-tabular text-2xl font-extrabold text-indigo mt-1">
+          {formatRupees(earnedPaise + topupPaise)}
+        </span>
+        <span className="font-tabular text-xs text-ink/60">
+          {formatRupees(targetPaise)} target
+        </span>
       </div>
-    </main>
+    </div>
   );
 }
