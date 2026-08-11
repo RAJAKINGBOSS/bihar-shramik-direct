@@ -1,102 +1,98 @@
-# Bihar Shramik Direct — Starter Build
+"use client";
 
-A mobile-first, zero-commission platform connecting Bihar's gig workers
-(plumbers, electricians, drivers, delivery partners, daily wage laborers)
-directly with customers, with a state-backed **Basic Daily Amount**
-safety net.
+import { formatRupees } from "@/lib/i18n";
 
-## Project structure
+interface EarningsRingProps {
+  earnedPaise: number;      // direct earnings so far today
+  topupPaise: number;       // welfare top-up credited/eligible so far
+  targetPaise: number;      // state minimum wage target for the day
+  size?: number;
+}
 
-```
-bihar-shramik-direct/
-├── app/
-│   ├── globals.css              # design tokens, font import
-│   └── worker/
-│       └── dashboard/
-│           └── page.tsx         # ⭐ Worker Main Dashboard (the requested deliverable)
-├── components/
-│   ├── EarningsRing.tsx         # signature diya (oil-lamp) progress ring
-│   ├── AvailabilityToggle.tsx   # "Available for Work Now" toggle
-│   └── LanguageToggle.tsx       # Hindi / Bhojpuri / English switch
-├── lib/
-│   └── i18n.ts                  # translation strings + ₹ formatter
-├── supabase/
-│   └── schema.sql               # full Postgres schema + RLS policies
-└── tailwind.config.ts
-```
+/**
+ * Signature element: a diya (oil lamp) ring that fills like oil rising
+ * toward the wick as the worker earns. The direct-earning arc fills in
+ * turmeric gold; once earnings alone don't reach the state minimum, a
+ * second, visibly distinct gold-white arc shows the welfare top-up
+ * completing the flame — so a worker can see at a glance whether
+ * today's income is coming from customers or from the safety net,
+ * without reading numbers.
+ */
+export default function EarningsRing({
+  earnedPaise,
+  topupPaise,
+  targetPaise,
+  size = 220,
+}: EarningsRingProps) {
+  const radius = size / 2 - 14;
+  const circumference = 2 * Math.PI * radius;
+  const safeTarget = Math.max(targetPaise, 1);
 
-Not included in this pass, but structured for: `app/customer/` (search +
-booking flow), `app/admin/` (welfare fund + KYC dashboard), `app/worker/onboarding/`
-(OTP + e-Shram linking), and `lib/supabase/client.ts`.
+  const earnedFraction = Math.min(earnedPaise / safeTarget, 1);
+  const topupFraction = Math.min((earnedPaise + topupPaise) / safeTarget, 1) - earnedFraction;
 
-## Database schema — key models (see `supabase/schema.sql` for full detail)
+  const earnedLength = circumference * earnedFraction;
+  const topupLength = circumference * Math.max(topupFraction, 0);
+  const center = size / 2;
 
-**`workers`** — phone-based identity, e-Shram/Bihar Gig Worker ID, skill
-categories, KYC status, live GPS (`geography(Point,4326)` via PostGIS),
-`is_available` toggle.
+  const reachedTarget = earnedPaise + topupPaise >= targetPaise;
 
-**`wallets`** + **`wallet_transactions`** — single running ledger per
-worker. Every rupee is tagged by `type`: `direct_earning` (from a
-booking), `welfare_topup`, or `withdrawal`. This keeps the "100% to the
-worker" promise auditable — the platform never records itself as a
-payee.
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        {/* track */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="#E8DFC9"
+          strokeWidth={14}
+        />
+        {/* direct earnings arc */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="#E8A83C"
+          strokeWidth={14}
+          strokeLinecap="round"
+          strokeDasharray={`${earnedLength} ${circumference - earnedLength}`}
+          className="transition-all duration-700 ease-out"
+        />
+        {/* welfare top-up arc, offset to start where earnings left off */}
+        {topupLength > 0 && (
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke="#F2C14E"
+            strokeWidth={14}
+            strokeLinecap="round"
+            strokeDasharray={`${topupLength} ${circumference - topupLength}`}
+            strokeDashoffset={-earnedLength}
+            className="transition-all duration-700 ease-out"
+          />
+        )}
+      </svg>
 
-**`availability_sessions`** — start/stop timestamps that accumulate the
-8-hour "logged in & active" clock the Basic Daily Amount depends on.
-
-**`daily_topups`** + **`welfare_fund`** — the safety-net machinery.
-`settle_daily_topup()` is a Postgres function that: checks KYC is
-verified, checks 8 active hours were logged, computes
-`max(0, state_minimum − direct_earnings)`, and writes an auditable row.
-It can run as a nightly settlement job or be called live to power the
-dashboard's "eligible so far" preview.
-
-**`daily_earning_summary`** — a view joining today's earnings + active
-seconds + district minimum wage, so the dashboard reads one row instead
-of aggregating client-side.
-
-## Worker Main Dashboard — what's implemented
-
-- **Availability toggle** — large, thumb-friendly, green when live,
-  pulses to signal "broadcasting location."
-- **Basic Daily Amount tracker** — the diya ring: the turmeric arc is
-  direct customer earnings, the lighter gold arc is welfare top-up, so
-  a worker can tell at a glance how much of today's income came from
-  customers vs. the safety net, without reading numbers. An hours-active
-  bar shows progress toward the 8-hour eligibility threshold separately,
-  since hours and earnings are two independent conditions.
-- **Wallet card** — balance + one-tap UPI withdrawal button.
-- **Language toggle** — Hindi / Bhojpuri / English, persisted per
-  worker (`workers.preferred_language`); all UI strings route through
-  `lib/i18n.ts`.
-
-The component currently reads from `MOCK_DATA` — swap the `useEffect`
-for a Supabase realtime subscription on `wallets`, `wallet_transactions`,
-and `availability_sessions` filtered by the logged-in worker's id.
-
-## Design rationale
-
-- **Palette** — indigo, turmeric, sal-leaf green, and sindoor red,
-  drawn from Madhubani folk art rather than a generic dashboard scheme.
-  Turmeric and gold are reserved for money so the "is this rupee from a
-  customer or from welfare" distinction reads instantly.
-- **Typography** — Noto Sans Devanagari everywhere (one family, not
-  two), because it renders Hindi/Bhojpuri/English cleanly and keeps the
-  font payload minimal — a deliberate call given the brief's own
-  3G/4G constraint, not a shortcut.
-- **Money** — always tabular figures (`font-tabular`), so digits don't
-  jitter as balances update live.
-
-## Suggested next build steps
-
-1. `app/worker/onboarding/` — OTP login (e.g. via MSG91/Twilio Verify)
-   + e-Shram/Bihar Gig Worker ID capture.
-2. `app/customer/search/` — district + skill search, results as a
-   list/map of `is_available = true` workers within radius (PostGIS
-   `ST_DWithin`).
-3. `app/customer/[workerId]/pay/` — UPI deep link / QR generator
-   (`upi://pay?pa=<worker_upi_id>&am=<amount>`) — no platform routing.
-4. `app/admin/` — welfare fund balance, pending `daily_topups` queue,
-   KYC review queue.
-5. Wire `settle_daily_topup()` to a Supabase Edge Function on a cron
-   schedule, plus an on-demand call for the dashboard's live estimate.
+      {/* flame glyph at the wick position, lit once target is reached */}
+      <div
+        className="absolute flex flex-col items-center justify-center text-center"
+        style={{ width: size * 0.62, height: size * 0.62 }}
+      >
+        <span className="text-2xl" aria-hidden>
+          {reachedTarget ? "🪔" : "🪔"}
+        </span>
+        <span className="font-tabular text-2xl font-extrabold text-indigo mt-1">
+          {formatRupees(earnedPaise + topupPaise)}
+        </span>
+        <span className="font-tabular text-xs text-ink/60">
+          {formatRupees(targetPaise)} target
+        </span>
+      </div>
+    </div>
+  );
+}
